@@ -17,7 +17,6 @@ import os
 import re
 
 from blueapps.conf import environ, get_settings_from_module
-from blueapps.conf.database import get_default_database_config_dict
 
 locals().update(get_settings_from_module(environ))
 
@@ -65,10 +64,7 @@ MIDDLEWARE = (
     "django.middleware.locale.LocaleMiddleware",
 )
 
-DATABASES = {"default": get_default_database_config_dict(locals())}
-
 # Cache
-
 CACHES = {
     "db": {"BACKEND": "django.core.cache.backends.db.DatabaseCache", "LOCATION": "django_cache"},
     "login_db": {"BACKEND": "django.core.cache.backends.db.DatabaseCache", "LOCATION": "account_cache"},
