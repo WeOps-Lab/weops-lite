@@ -29,3 +29,36 @@ python-keycloak==3.7.0
 requests==2.27.1
 Werkzeug==0.15.3
 wrapt==1.14.1
+# Django
+Django==2.2.6
+django-cors-headers==3.2.1
+django-cors-middleware==1.5.0
+django-filter==2.3.0
+django-versionlog==1.6.0
+djangorestframework==3.11.1
+
+# swagger
+django-rest-swagger==2.2.0
+django-simpleui==2023.3.1
+drf-yasg==1.17.0
+
+# celery
+celery==3.1.25
+django-celery==3.2.1
+
+# redis
+redis==3.5.3
+django-redis==4.8.0
+
+# pgsql
+psycopg2-binary==2.9.9
+
+# keycloak
+python-keycloak==3.7.0
+
+# Basic library
+requests==2.27.1
+Werkzeug==0.15.3
+wrapt==1.14.1
+python-dotenv==1.0.0
+daphne==4.0.0

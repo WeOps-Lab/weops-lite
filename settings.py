@@ -14,6 +14,11 @@ specific language governing permissions and limitations under the License.
 import os
 import sys
 
+from dotenv import load_dotenv
+
+# 加载 .env 文件中的环境变量到 os.environ
+load_dotenv()
+
 """
 请不要修改该文件
 如果你需要对settings里的内容做修改，config/default.py 文件中 添加即可

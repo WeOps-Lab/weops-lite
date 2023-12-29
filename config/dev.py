@@ -10,8 +10,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import os
-
 from config import RUN_VER
 
 if RUN_VER == "open":
@@ -46,11 +44,11 @@ DEBUG = True
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": APP_CODE,  # noqa
-        "USER": "postgres",
-        "PASSWORD": "postgres",
-        "HOST": os.environ.get('BKAPP_MYSQL_HOST', 'postgres-container'),
-        "PORT": "5432",
+        "HOST": os.environ.get('BKAPP_PG_HOST', 'postgres-container'),
+        "PORT": os.environ.get('BKAPP_PG_PORT', '5432'),
+        "NAME": os.environ.get('BKAPP_PG_NAME', APP_CODE),
+        "USER": os.environ.get('BKAPP_PG_USER', 'postgres'),
+        "PASSWORD": os.environ.get('BKAPP_PG_PASSWORD', 'postgres'),
     },
 }
 
