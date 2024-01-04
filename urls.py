@@ -59,8 +59,8 @@ schema_view = get_schema_view(
         license=openapi.License(name="BSD License"),
     ),
     public=True,
-    authentication_classes=tuple(),
-    permission_classes=tuple(),
+    authentication_classes=[],
+    permission_classes=[],
 )
 
 urlpatterns += [
@@ -72,42 +72,13 @@ urlpatterns += [
 urlpatterns += [
     # 系统管理
     url(r"^system/mgmt/", include("apps.system_mgmt.urls")),
-    # # 系统日志
-    # url(r"^syslog/", include("apps.syslog.urls")),
 ]
 
 urlpatterns += [url(r"^docs/$", schema_view)]
 
-# try:
-#     from custom_urls import urlpatterns as custom_url
-#     urlpatterns += custom_url
-#
-# except ImportError as e:
-#     traceback.print_exc()  # 打印详细的错误信息
-#     pass
-
 # 添加视图集路由
 router = SimpleRouter()
-
-# 3.5版本用户管理
-
-# router.register(r"system/mgmt/user_keycloak", KeyCloakViewSet, basename="keycloak-user")
-
-# router.register(r"system/mgmt/user_manage", UserManageViewSet, basename="sys-user")
-
-# 3.5版本角色管理
-# router.register(r"system/mgmt/role_manage", RoleManageViewSet, basename="sys-role")
-#
 router.register(r"system/mgmt/menu_manage", MenuManageModelViewSet, basename="sys-menu")
-#
-# router.register(r"system/mgmt/inst_permissions", InstancesPermissionsModelViewSet, basename="sys-permissions")
-
-# 系统用户操作
-# router.register(r"system/mgmt/sys_users", SysUserViewSet, basename="sys-user")
-# 系统操作日志
 router.register(r"system/mgmt/operation_log", OperationLogViewSet, basename="sys-log")
-# 系统配置
-# router.register(r"system/mgmt/sys_setting", SysSettingViewSet, basename="sys-setting")
-
 urlpatterns += router.urls
 
