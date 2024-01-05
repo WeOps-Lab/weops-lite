@@ -56,8 +56,12 @@ MIDDLEWARE = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 蓝鲸静态资源服务
     "whitenoise.middleware.WhiteNoiseMiddleware",
+
+    # TODO 待更换LoginRequiredMiddleware
+    "authentication.keycloak.middlewares.LoginRequiredMiddleware",
+
     # Auth middleware
-    "blueapps.account.middlewares.LoginRequiredMiddleware",
+    # "blueapps.account.middlewares.LoginRequiredMiddleware",
     # exception middleware
     "blueapps.core.exceptions.middleware.AppExceptionMiddleware",
     # django国际化中间件
@@ -118,9 +122,11 @@ SESSION_COOKIE_NAME = "_".join([APP_CODE, "sessionid"])
 AUTH_USER_MODEL = "account.User"
 
 AUTHENTICATION_BACKENDS = (
-    "blueapps.account.backends.RioBackend",
-    "blueapps.account.backends.WeixinBackend",
-    "blueapps.account.backends.UserBackend",
+    # TODO 待更换认证模块
+    "authentication.keycloak.backends.KeycloakBackend",
+    # "blueapps.account.backends.RioBackend",
+    # "blueapps.account.backends.WeixinBackend",
+    # "blueapps.account.backends.UserBackend",
 )
 
 RE_MOBILE = re.compile(r"Mobile|Android|iPhone|iPad|iPod", re.IGNORECASE)

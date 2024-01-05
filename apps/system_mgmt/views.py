@@ -172,6 +172,22 @@ class KeycloakLoginView(views.APIView):
             return res
 
 
+@login_exempt
+def access_token(request):
+    # 从请求中获取code
+    code = request.GET.get('code', None)
+    if code is None:
+        return Response({'error': 'no code found'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        token = KeycloakUserController.get_token_from_code(code, request.build_absolute_uri().split('?')[0])
+        print(f'token get from code: {token}')
+        response = HttpResponseRedirect(request.build_absolute_uri('/'))
+        response.set_cookie('bk_token', token)
+        return response
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 class KeycloakCodeLoginView(views.APIView):
     '''
     该类用作验证登录
@@ -179,6 +195,8 @@ class KeycloakCodeLoginView(views.APIView):
     authentication_classes = []
     permission_classes = []
 
+    @login_exempt
+    # @csrf_exempt
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter('code', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING)

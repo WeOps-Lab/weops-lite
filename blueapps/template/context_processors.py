@@ -27,11 +27,11 @@ def blue_settings(request):
         if request.user.is_anonymous:
             username = ""
             nickname = ""
-            avatar_url = ""
+            # avatar_url = ""
         else:
             username = request.user.username
             nickname = request.user.nickname
-            avatar_url = request.user.avatar_url
+            # avatar_url = request.user.avatar_url
 
         context = {
             # 本地静态文件访问
@@ -59,7 +59,7 @@ def blue_settings(request):
             # 用户昵称
             "NICKNAME": nickname,
             # 用户头像
-            "AVATAR_URL": avatar_url,
+            # "AVATAR_URL": avatar_url,
             # WEIXIN ROOT URL
             "WEIXIN_SITE_URL": settings.WEIXIN_SITE_URL,
             # WEIXIN 本地静态资源链接

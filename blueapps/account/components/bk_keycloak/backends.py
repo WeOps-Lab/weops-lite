@@ -16,6 +16,7 @@ class KeycloakBackend(ModelBackend):
     无论是哪一种方式，authenticate()``都应该检查所获得的凭证，并当凭证有效时返回一个用户对象。当凭证无效时，应该返回``None
     不用该方法，随便返回
     '''
+
     def authenticate(self, request, username=None, password=None, bk_token=None):
 
         return get_user_model()
