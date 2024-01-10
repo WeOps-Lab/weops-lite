@@ -19,7 +19,6 @@ from rest_framework import views, status
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
 from django.http import JsonResponse, HttpResponseRedirect
 from rest_framework.request import Request
 from django.views.decorators.http import require_GET, require_POST
@@ -30,7 +29,6 @@ from drf_yasg.utils import swagger_auto_schema
 # 装饰器引入 from blueapps.account.decorators import login_exempt
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from apps.system_mgmt import constants as system_constants
@@ -38,7 +36,6 @@ from common.keycloak_auth import KeycloakTokenAuthentication
 from common.keycloak_auth import KeycloakIsAuthenticated
 from apps.system_mgmt.filters import (
     MenuManageFilter,
-    NewSysUserFilter,
     OperationLogFilter,
 )
 from apps.system_mgmt.models import MenuManage, OperationLog, SysSetting, SysUser
@@ -47,17 +44,14 @@ from apps.system_mgmt.serializers import (
     LogSerializer,
     MenuManageModelSerializer,
     OperationLogSer,
-    SysUserSerializer,
 )
-from apps.system_mgmt.user_manages import UserManageApi
-from apps.system_mgmt.utils_package.controller import UserController, KeycloakUserController, \
+from apps.system_mgmt.utils_package.controller import KeycloakUserController, \
     KeycloakRoleController, KeycloakPermissionController, KeycloakGroupController
 from blueapps.account.decorators import login_exempt
 
-from apps.system_mgmt.constants import USER_CACHE_KEY
 from packages.drf.viewsets import ModelViewSet
 
-from utils.decorators import ApiLog, delete_cache_key_decorator
+from utils.decorators import ApiLog
 from apps.system_mgmt.utils_package.CheckKeycloakPermission import check_keycloak_permission
 
 
@@ -136,40 +130,40 @@ class OperationLogViewSet(ListModelMixin, GenericViewSet):
     filter_class = OperationLogFilter
 
 
-class KeycloakLoginView(views.APIView):
-    '''
-    该类用作验证登录
-    '''
-    # 让RDF不认证
-    authentication_classes = []
-    permission_classes = []
-
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'username': openapi.Schema(type=openapi.TYPE_STRING, description='User username'),
-                'password': openapi.Schema(type=openapi.TYPE_STRING, description='User password'),
-            }
-        ),
-    )
-    def post(self, request: Request) -> Response:
-        # 从请求中获取用户名和密码
-        username = request.data.get('username', None)
-        password = request.data.get('password', None)
-        if username is None or password is None:
-            return Response({'detail': 'username or password are not present!'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            token = KeycloakUserController.get_token(username, password)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
-        if token is None:
-            # 用户验证失败，返回错误响应
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            res = Response({'token': token}, status=status.HTTP_200_OK)
-            res.set_cookie('token', token)
-            return res
+# class KeycloakLoginView(views.APIView):
+#     """
+#     该类用作验证登录
+#     """
+#     # 让RDF不认证
+#     authentication_classes = []
+#     permission_classes = []
+#
+#     @swagger_auto_schema(
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             properties={
+#                 'username': openapi.Schema(type=openapi.TYPE_STRING, description='User username'),
+#                 'password': openapi.Schema(type=openapi.TYPE_STRING, description='User password'),
+#             }
+#         ),
+#     )
+#     def post(self, request: Request) -> Response:
+#         # 从请求中获取用户名和密码
+#         username = request.data.get('username', None)
+#         password = request.data.get('password', None)
+#         if username is None or password is None:
+#             return Response({'detail': 'username or password are not present!'}, status=status.HTTP_400_BAD_REQUEST)
+#         try:
+#             token = KeycloakUserController.get_token(username, password)
+#         except Exception as e:
+#             return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+#         if token is None:
+#             # 用户验证失败，返回错误响应
+#             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+#         else:
+#             res = Response({'token': token}, status=status.HTTP_200_OK)
+#             res.set_cookie('token', token)
+#             return res
 
 
 @login_exempt
@@ -186,39 +180,6 @@ def access_token(request):
         return response
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
-
-
-class KeycloakCodeLoginView(views.APIView):
-    '''
-    该类用作验证登录
-    '''
-    authentication_classes = []
-    permission_classes = []
-
-    @login_exempt
-    # @csrf_exempt
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('code', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING)
-        ],
-        operation_description='用作登录后的重定向，根据请求的code获取token，获取完回到主页'
-    )
-    def get(self, request: Request):
-        # 从请求中获取code
-        code = request.query_params.get('code', None)
-        if code is None:
-            return Response({'error': 'no code found'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            token = KeycloakUserController.get_token_from_code(code, request.build_absolute_uri().split('?')[0])
-            print(f'token get from code: {token}')
-            # response = Response(status=302)
-            # response['Location'] = request.build_absolute_uri('/')
-            # response.set_cookie('token', token)
-            response = HttpResponseRedirect(request.build_absolute_uri('/'))
-            response.set_cookie('token', token)
-            return response
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class KeycloakUserViewSet(viewsets.ViewSet):
@@ -408,18 +369,18 @@ class KeycloakRoleViewSet(viewsets.ViewSet):
     @swagger_auto_schema()
     @check_keycloak_permission('SysRole_view')
     def list(self, request: Request):
-        '''
+        """
         获取所有角色
-        '''
+        """
         res = KeycloakRoleController.get_client_roles()
         return Response(res)
 
     @swagger_auto_schema()
     @check_keycloak_permission('SysRole_view')
     def retrieve(self, request: Request, pk: str):
-        '''
+        """
         获取指定角色，以及其拥有的权限
-        '''
+        """
         try:
             res = KeycloakRoleController.get_client_roles_permissions_by_id(pk)
         except Exception as e:
@@ -438,9 +399,9 @@ class KeycloakRoleViewSet(viewsets.ViewSet):
     )
     @check_keycloak_permission('SysRole_create')
     def create(self, request):
-        '''
+        """
         创建角色
-        '''
+        """
         role_name = request.data.get('role_name', None)
         des = request.data.get('description', None)
         if not role_name or not des:
@@ -608,9 +569,9 @@ class KeycloakGroupViewSet(viewsets.ViewSet):
     @swagger_auto_schema()
     @check_keycloak_permission('SysGroup_view')
     def retrieve(self, request: Request, pk: str):
-        '''
+        """
         获取一个组以及其子组
-        '''
+        """
         try:
             group = KeycloakGroupController.get_group(pk)
             return Response(group, status.HTTP_200_OK)
@@ -792,174 +753,6 @@ class KeycloakGroupViewSet(viewsets.ViewSet):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class UserManageViewSet(ModelViewSet):
-    permission_classes = [IsAuthenticated]
-    queryset = SysUser.objects.all()
-    serializer_class = SysUserSerializer
-    ordering_fields = ["created_at"]
-    ordering = ["-created_at"]
-    filter_class = NewSysUserFilter
-    pagination_class = LargePageNumberPagination
-
-    def __init__(self, *args, **kwargs):
-        super(UserManageViewSet, self).__init__(*args, **kwargs)
-        self.manage_api = UserManageApi()
-
-    @swagger_auto_schema(
-        operation_description='获取所有用户（无参）'
-    )
-    @action(methods=["GET"], detail=False, url_path="get_users")
-    @ApiLog("用户管理获取用户")
-    def bk_user_manage_list(self, request, *args, **kwargs):
-        """
-        获取用户
-        """
-        return super().list(request, *args, **kwargs)
-
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('page', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
-            openapi.Parameter('page_size', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
-            openapi.Parameter('search', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING),
-        ]
-    )
-    @action(methods=["GET"], detail=False)
-    @ApiLog("多因子用户查询")
-    def search_user_list(self, request, *args, **kwargs):
-        """
-        获取用户
-        """
-        page = int(request.GET.get("page", 1))
-        page_size = int(request.GET.get("page_size", 20))
-        search = request.GET.get("search", "")
-        start = page_size * (page - 1)
-        end = page_size * page
-
-        user_list = SysUser.objects.filter(Q(bk_username__icontains=search) | Q(chname__icontains=search))
-        user_count = user_list.count()
-        return_data = list(user_list.values("id", "bk_username", "chname")[start:end])
-        return JsonResponse({"result": True, "data": {"count": user_count, "items": return_data}})
-
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'username': openapi.Schema(type=openapi.TYPE_STRING, description='User bk_rname'),
-                'display_name': openapi.Schema(type=openapi.TYPE_STRING, description='User displayname'),
-                'telephone': openapi.Schema(type=openapi.TYPE_STRING, description='User telephone'),
-                'email': openapi.Schema(type=openapi.TYPE_STRING, description='User email'),
-                'password': openapi.Schema(type=openapi.TYPE_STRING, description='User password'),
-            },
-            required=['username', 'display_name', 'password']
-        ),
-    )
-
-    @delete_cache_key_decorator(USER_CACHE_KEY)
-    @action(methods=["POST"], detail=False, url_path="create_user")
-    @ApiLog("用户管理创建用户")
-    def create_bk_user_manage(self, request, *args, **kwargs):
-        """
-        创建用户
-        采用数据库事务控制
-        先本地插入数据，再去请求用户中心
-        若请求成功：
-            更新入库，提交事务
-        若请求失败：
-            事务回滚
-
-        最后返回前 都显性提交一次事务
-        """
-        res = UserController.add_user_controller(**{"request": request, "self": self, "manage_api": self.manage_api})
-        return Response(**res)
-
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'id': openapi.Schema(type=openapi.TYPE_STRING, description='User id'),
-                'bk_user_id': openapi.Schema(type=openapi.TYPE_STRING, description='随便填'),
-                'display_name': openapi.Schema(type=openapi.TYPE_STRING, description='User username'),
-                'telephone': openapi.Schema(type=openapi.TYPE_STRING, description='User telephone'),
-                'email': openapi.Schema(type=openapi.TYPE_STRING, description='User email')
-            },
-            required=['id', 'display_name']
-        ),
-    )
-    @action(methods=["PUT"], detail=False, url_path="edit_user")
-    @ApiLog("用户管理修改用户")
-    def modify_bk_user_manage(self, request, *args, **kwargs):
-        """
-        修改用户,username不可更改
-        """
-        if request.data.get('username', None) is not None:
-            return Response({'error': 'username cannot be changed'}, status=status.HTTP_400_BAD_REQUEST)
-        res = UserController.update_user_controller(**{"request": request, "self": self, "manage_api": self.manage_api})
-        return Response(**res)
-
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'id': openapi.Schema(type=openapi.TYPE_STRING, description='User id'),
-                'password': openapi.Schema(type=openapi.TYPE_STRING, description='User password'),
-            },
-            required=['id', 'password']
-        ),
-    )
-    @action(methods=["PUT"], detail=False, url_path="reset_password")
-    @ApiLog("用户管理重置密码")
-    def reset_bk_user_password(self, request, *args, **kwargs):
-        """
-        重置密码
-        """
-        id = request.data.get('id', None)
-        password = request.data.get('password', None)
-        if id is None or password is None:
-            return Response({'error': 'is or password are not present'}, status=status.HTTP_400_BAD_REQUEST)
-        sys_user = SysUser.objects.get(pk=int(id))
-        kc_user = KeycloakUserController.get_user_by_name(sys_user.bk_username, request.auth)
-        if kc_user is None:
-            return Response({'error': 'user not found'}, status=status.HTTP_404_NOT_FOUND)
-        KeycloakUserController.reset_password(kc_user['id'], password, request.auth)
-        # res = UserController.reset_user_password_controller(
-        #     **{"request": request, "self": self, "manage_api": self.manage_api}
-        # )
-        return Response({'message': 'success'})
-
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
-            openapi.Parameter('bk_user_id', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='随便填'),
-        ],
-    )
-    @delete_cache_key_decorator(USER_CACHE_KEY)
-    @action(methods=["DELETE"], detail=False, url_path="delete_users")
-    @ApiLog("用户管理删除用户")
-    def delete_bk_user_manage(self, request, *args, **kwargs):
-        """
-        删除用户
-        """
-        res = UserController.delete_user_controller(**{"request": request, "self": self, "manage_api": self.manage_api})
-        return Response(**res)
-
-    @action(methods=["POST"], detail=False, url_path="set_user_roles")
-    @ApiLog("用户管理设置用户角色")
-    def set_bk_user_roles(self, request, *args, **kwargs):
-        """
-        设置用户角色
-        """
-        res = UserController.set_user_roles_controller(**{"request": request, "self": self})
-        return Response(**res)
-
-    @action(methods=["PUT"], detail=True)
-    @ApiLog("设置用户角色状态")
-    def update_user_status(self, request, pk):
-        res = UserController.set_user_status(
-            **{"request": request, "self": self, "manage_api": self.manage_api, "id": pk}
-        )
-        return Response(**res)
-
-
 class MenuManageModelViewSet(ModelViewSet):
     """
     自定义菜单管理
@@ -1119,11 +912,6 @@ class LoginInfoView(views.APIView):
                         'operate_ids': operate_idss,
                         'menuId': k
                     })
-        # for menu in menus:
-        #     for p in permissions['menu']:
-        #         operate_idss = list
-        #         if p['allow']:
-        #             pass
         return Response({
             'username': request.user['username'],
             'id': request.user['id'],
