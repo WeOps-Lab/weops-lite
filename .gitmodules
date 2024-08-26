@@ -1,0 +1,6 @@
+[submodule "lite-cmdb-web"]
+	path = lite-cmdb-web
+	url = https://github.com/WeOps-Lab/lite-cmdb-web.git
+[submodule "lite-cmdb"]
+	path = lite-cmdb
+	url = https://github.com/WeOps-Lab/lite-cmdb.git
