@@ -4,3 +4,6 @@
 [submodule "lite-cmdb"]
 	path = lite-cmdb
 	url = https://github.com/WeOps-Lab/lite-cmdb.git
+[submodule "weops-next-infra"]
+	path = weops-next-infra
+	url = https://github.com/WeOps-Lab/weops-next-infra.git
