@@ -7,3 +7,6 @@
 [submodule "weops-next-infra"]
 	path = weops-next-infra
 	url = https://github.com/WeOps-Lab/weops-next-infra.git
+[submodule "automation-server"]
+	path = automation-server
+	url = https://github.com/WeOps-Lab/automation-server.git
