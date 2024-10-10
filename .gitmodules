@@ -10,3 +10,6 @@
 [submodule "automation-server"]
 	path = automation-server
 	url = https://github.com/WeOps-Lab/automation-server.git
+[submodule "kube-service"]
+	path = kube-service
+	url = https://github.com/WeOps-Lab/kube-service
